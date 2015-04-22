@@ -1,0 +1,73 @@
+---
+- hosts: servers
+  vars_files:
+    - vars.yml
+  gather_facts: false
+  sudo: true
+
+  tasks:
+  - name: Create the project directory.
+    file: state=directory path={{ project_root }}
+
+  - name: Create user.
+    user: home={{ project_root }}/home/ name={{ project_name }} state=present
+
+  - name: Update the project directory.
+    file: group={{ project_name }} owner={{ project_name }} mode=755 state=directory path={{ project_root }}
+
+  - name: Create the code directory.
+    file: group={{ project_name }} owner={{ project_name }} mode=755 state=directory path={{ project_root }}/code/
+
+  - name: Add repos
+    apt_repository: repo='ppa:brightbox/ruby-ng'
+
+  - name: Update Repo
+    apt: update_cache=yes
+
+  - name: Install required system packages.
+    apt: pkg={{ item }} state=installed update-cache=yes
+    with_items: "{{ system_packages }}"
+
+  - name: Install required Python packages.
+    easy_install: name={{ item }}
+    with_items: "{{ python_packages }}"
+
+  - name: Install required Gems.
+    gem: name={{ item }} user_install=no
+    with_items: "{{ ruby_gems }}"
+
+
+  - name: Create the SSH directory.
+    file: state=directory path={{ project_root }}/home/.ssh/
+    when: "{{vm}} == 0"
+
+  - name: Create the SSL directory.
+    file: state=directory path={{ project_root }}/home/ssl/
+
+  - name: Change permissions.
+    shell: chown -R {{ project_name }}:{{ project_name }} {{ project_root }}
+
+  - name: Install nginx configuration file.
+    template: src=files/conf/nginx.conf dest=/etc/nginx/sites-enabled/{{ project_name }}
+    notify: restart nginx
+
+  - name: Install init scripts.
+    template: src=files/init/{{ item }}.conf dest=/etc/init/{{ project_name }}_{{ item }}.conf
+    with_items: "{{ initfiles }}"
+
+
+  handlers:
+    - include: handlers.yml
+
+- include: deploy.yml
+
+- hosts: servers
+  vars_files:
+    - vars.yml
+  gather_facts: false
+  sudo: true
+
+  tasks:
+  - name: Restart services.
+    service: name={{ project_name }}_{{ item }} state=restarted
+    with_items: "{{ initfiles }}"

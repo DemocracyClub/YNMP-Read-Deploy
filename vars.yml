@@ -1,0 +1,25 @@
+---
+project_name: ynmp_read
+project_root: /var/www/ynmp_read
+app_name: ynmp_read
+project_repo: https://github.com/DemocracyClub/YourNextMP-Read.git
+alias_domains: []
+system_packages:
+  - build-essential
+  - git
+  - nginx
+  - python-pil
+  - ruby2.1
+  - ruby2.1-dev
+  - make
+  - gcc
+  - nodejs
+python_packages:
+  - pip
+  - virtualenv
+ruby_gems:
+  - mercenary
+  - jekyll
+  - github-pages
+initfiles:
+  - gunicorn

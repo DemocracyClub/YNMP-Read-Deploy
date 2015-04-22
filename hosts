@@ -1,0 +1,8 @@
+[remote:children]
+production
+
+[servers:children]
+production
+
+[production]
+DC_prod nickname=production vm=0 branch=master domain=yournextmp.com

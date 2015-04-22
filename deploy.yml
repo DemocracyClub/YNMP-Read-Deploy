@@ -1,0 +1,27 @@
+---
+- hosts: servers
+  vars_files:
+    - vars.yml
+  gather_facts: false
+  sudo: true
+  sudo_user: "{{ project_name }}"
+
+  tasks:
+  - name: Pull sources from the repository.
+    git:
+      repo: "{{ project_repo }}"
+      dest: "{{ project_root }}/code/"
+      version: "{{ branch }}"
+      accept_hostkey: true
+
+  - name: Upload run-build script.
+    template: src=files/run-build.sh dest={{ project_root }}/home/run-build.sh mode=0755
+
+  - name: Build Site
+    command: "{{ project_root }}/home/run-build.sh"
+
+  - cron: name="Rebuild site" minute="*" hour="*/2" job="{{ project_root }}/home/run-build.sh"
+
+
+  handlers:
+    - include: handlers.yml
